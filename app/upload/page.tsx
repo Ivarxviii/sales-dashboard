@@ -5,11 +5,30 @@ import Link from "next/link"
 import { parseCsv, validateHeaders } from "@/lib/csv-parse"
 import { transformToDashboardData, setStoredSalesData } from "@/lib/csv-transform"
 
+type PreviewRow = Record<string, string>
+
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
   const [isDragging, setIsDragging] = useState(false)
+  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([])
+
+  async function loadPreview(selectedFile: File | null) {
+    if (!selectedFile) {
+      setPreviewRows([])
+      return
+    }
+
+    try {
+      const text = await selectedFile.text()
+      const rows = parseCsv(text)
+      setPreviewRows(rows.slice(0, 5))
+    } catch (error) {
+      console.error(error)
+      setPreviewRows([])
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -62,7 +81,7 @@ export default function UploadPage() {
     setIsDragging(false)
   }
 
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+  async function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault()
     setIsDragging(false)
 
@@ -72,6 +91,15 @@ export default function UploadPage() {
     setFile(droppedFile)
     setStatus("idle")
     setMessage("")
+    await loadPreview(droppedFile)
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const selectedFile = e.target.files?.[0] ?? null
+    setFile(selectedFile)
+    setStatus("idle")
+    setMessage("")
+    await loadPreview(selectedFile)
   }
 
   return (
@@ -99,7 +127,7 @@ export default function UploadPage() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <h1 className="mb-6 text-2xl font-bold text-gray-900">Upload Sales Data</h1>
 
-        <div className="max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="max-w-3xl rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -129,7 +157,7 @@ export default function UploadPage() {
                 name="file"
                 type="file"
                 accept=".csv"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                onChange={handleFileChange}
                 className="mt-4 w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium"
               />
 
@@ -143,6 +171,45 @@ export default function UploadPage() {
                 </p>
               )}
             </div>
+
+            {previewRows.length > 0 && (
+              <div className="rounded-lg border border-gray-200">
+                <div className="border-b border-gray-200 px-4 py-2">
+                  <p className="text-sm font-medium text-gray-800">Preview (first 5 rows)</p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        {Object.keys(previewRows[0]).map((key) => (
+                          <th
+                            key={key}
+                            className="whitespace-nowrap px-3 py-2 text-left font-medium text-gray-700"
+                          >
+                            {key}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewRows.map((row, rowIndex) => (
+                        <tr key={rowIndex} className="border-t border-gray-200">
+                          {Object.values(row).map((value, cellIndex) => (
+                            <td
+                              key={cellIndex}
+                              className="whitespace-nowrap px-3 py-2 text-gray-600"
+                            >
+                              {String(value)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -170,4 +237,4 @@ export default function UploadPage() {
       </div>
     </main>
   )
-} 
+}
