@@ -1,6 +1,8 @@
-import { recentOrders } from "@/lib/mock-data"
+type RecentOrdersProps = {
+  recentOrders: { id: string; date: string; customer: string; amount: number; status: string }[]
+}
 
-export default function RecentOrders() {
+export default function RecentOrders({ recentOrders }: RecentOrdersProps) {
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
       <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">

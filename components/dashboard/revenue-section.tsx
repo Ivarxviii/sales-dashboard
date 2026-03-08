@@ -1,7 +1,9 @@
-import { revenueByMonth } from "@/lib/mock-data"
+type RevenueSectionProps = {
+  revenueByMonth: { month: string; revenue: number }[]
+}
 
-export default function RevenueSection() {
-  const maxRevenue = Math.max(...revenueByMonth.map((m) => m.revenue))
+export default function RevenueSection({ revenueByMonth }: RevenueSectionProps) {
+  const maxRevenue = revenueByMonth.length > 0 ? Math.max(...revenueByMonth.map((m) => m.revenue)) : 1
 
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">

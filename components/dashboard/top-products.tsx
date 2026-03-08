@@ -1,6 +1,8 @@
-import { topProducts } from "@/lib/mock-data"
+type TopProductsProps = {
+  topProducts: { name: string; units: number; revenue: number }[]
+}
 
-export default function TopProducts() {
+export default function TopProducts({ topProducts }: TopProductsProps) {
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
       <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
