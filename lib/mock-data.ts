@@ -43,3 +43,13 @@ export const recentOrders = [
   { id: "#10281", date: "2025-03-06", customer: "BuildRight LLC", amount: 89, status: "Pending" },
   { id: "#10280", date: "2025-03-05", customer: "ScaleUp Ltd", amount: 999, status: "Paid" },
 ]
+
+export function getSampleCsvContent(): string {
+  return `order_id,date,customer,product,quantity,amount,status
+#10284,2025-03-07,Acme Corp,Premium Plan,2,299,Paid
+#10284,2025-03-07,Acme Corp,Add-on,1,50,Paid
+#10283,2025-03-07,TechStart Inc,Starter Kit,1,149,Paid
+#10282,2025-03-06,Design Co,Pro Add-on,1,599,Paid
+#10281,2025-03-06,BuildRight LLC,Basic Subscription,1,89,Pending
+#10280,2025-03-05,ScaleUp Ltd,Enterprise License,1,999,Paid`
+}
