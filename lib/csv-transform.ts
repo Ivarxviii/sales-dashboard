@@ -1,4 +1,20 @@
+import type { ColumnMapping } from "@/lib/csv-parse"
+import { REQUIRED_FIELDS } from "@/lib/csv-parse"
 import { kpis as mockKpis, revenueByMonth, topProducts, recentOrders } from "@/lib/mock-data"
+
+export function remapRows(
+  rows: Record<string, string>[],
+  mapping: ColumnMapping
+): Record<string, string>[] {
+  return rows.map((row) => {
+    const remapped: Record<string, string> = {}
+    for (const field of REQUIRED_FIELDS) {
+      const csvHeader = mapping[field]
+      remapped[field] = (csvHeader ? row[csvHeader] : "") ?? ""
+    }
+    return remapped
+  })
+}
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 

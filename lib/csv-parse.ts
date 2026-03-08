@@ -42,14 +42,50 @@ function parseRow(line: string): string[] {
   return result
 }
 
-const REQUIRED_HEADERS = ["order_id", "date", "customer", "product", "quantity", "amount", "status"]
+export const REQUIRED_FIELDS = ["order_id", "date", "customer", "product", "quantity", "amount", "status"] as const
+
+export type ColumnMapping = Record<(typeof REQUIRED_FIELDS)[number], string>
+
+const REQUIRED_HEADERS = [...REQUIRED_FIELDS]
 
 export function validateHeaders(headers: string[]): { valid: boolean; message?: string } {
-  const lower = headers.map((h) => h.toLowerCase().trim())
+  const lower = headers.map((h) => normalizeHeader(h))
   for (const required of REQUIRED_HEADERS) {
     if (!lower.includes(required)) {
       return { valid: false, message: `Missing required column: ${required}` }
     }
   }
   return { valid: true }
+}
+
+function normalizeHeader(h: string): string {
+  return h.toLowerCase().trim().replace(/\s+/g, "_")
+}
+
+const FIELD_ALIASES: Record<string, string[]> = {
+  order_id: ["order_id", "order id", "orderid", "id"],
+  date: ["date", "transaction_date", "order_date"],
+  customer: ["customer", "customer_name", "client"],
+  product: ["product", "product_name", "item"],
+  quantity: ["quantity", "qty", "units"],
+  amount: ["amount", "total", "revenue", "price"],
+  status: ["status", "payment_status", "paid"],
+}
+
+export function getDefaultMapping(csvHeaders: string[]): Partial<ColumnMapping> {
+  const normalizedHeaders = csvHeaders.map((h) => ({ original: h, normalized: normalizeHeader(h) }))
+  const mapping: Partial<ColumnMapping> = {}
+
+  for (const field of REQUIRED_FIELDS) {
+    const aliases = FIELD_ALIASES[field] ?? [field]
+    const normalizedAliases = aliases.map((a) => a.toLowerCase().replace(/\s+/g, "_"))
+    const match = normalizedHeaders.find(({ normalized }) =>
+      normalizedAliases.includes(normalized)
+    )
+    if (match) {
+      mapping[field as keyof ColumnMapping] = match.original
+    }
+  }
+
+  return mapping
 }

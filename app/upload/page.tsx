@@ -2,8 +2,17 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { parseCsv, validateHeaders } from "@/lib/csv-parse"
-import { transformToDashboardData, setStoredSalesData } from "@/lib/csv-transform"
+import {
+  parseCsv,
+  getDefaultMapping,
+  REQUIRED_FIELDS,
+  type ColumnMapping,
+} from "@/lib/csv-parse"
+import {
+  remapRows,
+  transformToDashboardData,
+  setStoredSalesData,
+} from "@/lib/csv-transform"
 import { getSampleCsvContent } from "@/lib/mock-data"
 
 type PreviewRow = Record<string, string>
@@ -14,21 +23,38 @@ export default function UploadPage() {
   const [message, setMessage] = useState("")
   const [isDragging, setIsDragging] = useState(false)
   const [previewRows, setPreviewRows] = useState<PreviewRow[]>([])
+  const [parsedRows, setParsedRows] = useState<Record<string, string>[]>([])
+  const [csvHeaders, setCsvHeaders] = useState<string[]>([])
+  const [mapping, setMapping] = useState<Partial<ColumnMapping>>({})
 
   async function loadPreview(selectedFile: File | null) {
     if (!selectedFile) {
       setPreviewRows([])
+      setParsedRows([])
+      setCsvHeaders([])
+      setMapping({})
       return
     }
 
     try {
       const text = await selectedFile.text()
       const rows = parseCsv(text)
+      setParsedRows(rows)
       setPreviewRows(rows.slice(0, 5))
+      const headers = rows.length > 0 ? Object.keys(rows[0]) : []
+      setCsvHeaders(headers)
+      setMapping(getDefaultMapping(headers))
     } catch (error) {
       console.error(error)
       setPreviewRows([])
+      setParsedRows([])
+      setCsvHeaders([])
+      setMapping({})
     }
+  }
+
+  function updateMapping(field: keyof ColumnMapping, value: string) {
+    setMapping((prev) => ({ ...prev, [field]: value || undefined }))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -48,19 +74,16 @@ export default function UploadPage() {
       return
     }
 
+    const fullMapping = REQUIRED_FIELDS.every((f) => mapping[f])
+    if (!fullMapping) {
+      setStatus("error")
+      setMessage("Please map all required fields to your CSV columns.")
+      return
+    }
+
     try {
-      const text = await file.text()
-      const rows = parseCsv(text)
-      const headers = rows.length > 0 ? Object.keys(rows[0]) : []
-
-      const { valid, message: msg } = validateHeaders(headers)
-      if (!valid) {
-        setStatus("error")
-        setMessage(msg ?? "Invalid CSV headers.")
-        return
-      }
-
-      const data = transformToDashboardData(rows)
+      const remapped = remapRows(parsedRows, mapping as ColumnMapping)
+      const data = transformToDashboardData(remapped)
       setStoredSalesData(data)
 
       setStatus("success")
@@ -68,7 +91,7 @@ export default function UploadPage() {
     } catch (error) {
       console.error(error)
       setStatus("error")
-      setMessage("Could not read or parse the file. Please check the format.")
+      setMessage("Could not process the file. Please check the format.")
     }
   }
 
@@ -205,7 +228,7 @@ export default function UploadPage() {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Required columns: order_id, date, customer, product, quantity, amount, status
+                Map your CSV columns to the required fields below.
               </p>
 
               {file && (
@@ -215,8 +238,45 @@ export default function UploadPage() {
               )}
             </div>
 
-            {previewRows.length > 0 && (
-              <div className="overflow-hidden rounded-xl border border-gray-200">
+            {previewRows.length > 0 && csvHeaders.length > 0 && (
+              <>
+                <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="mb-3 text-sm font-semibold text-gray-800">
+                    Map your columns
+                  </p>
+                  <div className="space-y-2">
+                    {REQUIRED_FIELDS.map((field) => (
+                      <div
+                        key={field}
+                        className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
+                      >
+                        <label
+                          htmlFor={`map-${field}`}
+                          className="w-24 shrink-0 text-sm text-gray-600"
+                        >
+                          {field.replace(/_/g, " ")}
+                        </label>
+                        <select
+                          id={`map-${field}`}
+                          value={mapping[field] ?? ""}
+                          onChange={(e) =>
+                            updateMapping(field, e.target.value)
+                          }
+                          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        >
+                          <option value="">— Select column —</option>
+                          {csvHeaders.map((h) => (
+                            <option key={h} value={h}>
+                              {h}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-gray-200">
                 <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
                   <p className="text-sm font-semibold text-gray-800">Preview (first 5 rows)</p>
                   <p className="mt-0.5 text-xs text-gray-500">
@@ -255,6 +315,7 @@ export default function UploadPage() {
                   </table>
                 </div>
               </div>
+              </>
             )}
 
             <button
@@ -283,7 +344,7 @@ export default function UploadPage() {
               <p className="font-semibold text-red-800">Upload failed</p>
               <p className="mt-1 text-sm text-red-700">{message}</p>
               <p className="mt-2 text-xs text-red-600">
-                Check that your CSV has the required columns: order_id, date, customer, product, quantity, amount, status
+                Map all 7 required fields (order_id, date, customer, product, quantity, amount, status) to your CSV columns.
               </p>
             </div>
           )}
