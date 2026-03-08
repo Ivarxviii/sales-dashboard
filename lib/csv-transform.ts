@@ -40,7 +40,7 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
   topProducts: { name: string; units: number; revenue: number }[]
   topCustomers: { name: string; revenue: number }[]
   recentOrders: { id: string; date: string; customer: string; amount: number; status: string }[]
-  insights: string[]
+  insights: { text: string; help?: string }[]
 } {
   if (rows.length === 0) {
     return getDefaultData()
@@ -166,32 +166,48 @@ function generateInsights(data: {
   revenueByMonthResult: { month: string; revenue: number }[]
   topProductsResult: { name: string; units: number; revenue: number }[]
   topCustomersResult: { name: string; revenue: number }[]
-}): string[] {
-  const insights: string[] = []
+}): { text: string; help?: string }[] {
+  const insights: { text: string; help?: string }[] = []
   const { totalRevenue, revenuePerCustomer, revenueByMonthResult, topProductsResult, topCustomersResult } = data
 
   if (topCustomersResult.length > 0 && totalRevenue > 0) {
     const top = topCustomersResult[0]
     const pct = Math.round((top.revenue / totalRevenue) * 100)
-    insights.push(`${top.name} generated ${pct}% of total revenue.`)
+    insights.push({
+      text: `${top.name} generated ${pct}% of total revenue (${formatCurrency(top.revenue)}).`,
+      help: "Revenue from this customer divided by total revenue.",
+    })
   }
 
   if (topProductsResult.length > 0) {
-    insights.push(`${topProductsResult[0].name} is your top-selling product by revenue.`)
+    const top = topProductsResult[0]
+    insights.push({
+      text: `${top.name} generated the most revenue (${formatCurrency(top.revenue)}).`,
+      help: "Product with the highest total revenue.",
+    })
   }
 
   if (revenuePerCustomer > 0) {
-    insights.push(`Revenue per customer averages ${formatCurrency(revenuePerCustomer)}.`)
+    insights.push({
+      text: `Revenue per customer averages ${formatCurrency(revenuePerCustomer)}.`,
+      help: "Total revenue divided by number of unique customers.",
+    })
   }
 
   if (revenueByMonthResult.length > 0) {
     const best = revenueByMonthResult.reduce((a, b) => (b.revenue > a.revenue ? b : a))
-    insights.push(`${best.month} generated the highest revenue.`)
+    insights.push({
+      text: `${best.month} generated the highest revenue (${formatCurrency(best.revenue)}).`,
+      help: "Month with the most total revenue.",
+    })
   }
 
   if (topProductsResult.length > 0) {
     const byUnits = topProductsResult.reduce((a, b) => (b.units > a.units ? b : a))
-    insights.push(`${byUnits.name} sold the most units (${byUnits.units}).`)
+    insights.push({
+      text: `${byUnits.name} sold the most units (${byUnits.units}).`,
+      help: "Product with the highest quantity sold.",
+    })
   }
 
   return insights
@@ -225,10 +241,15 @@ export function getStoredSalesData(): SalesData | null {
       data.topProducts &&
       data.recentOrders
     ) {
+      const rawInsights = data.insights ?? []
+      const insights = Array.isArray(rawInsights)
+        ? rawInsights.map((i) => (typeof i === "string" ? { text: i } : i))
+        : []
+
       return {
         ...data,
         topCustomers: data.topCustomers ?? [],
-        insights: data.insights ?? [],
+        insights,
       } as SalesData
     }
   } catch {

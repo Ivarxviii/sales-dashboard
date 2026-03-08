@@ -30,12 +30,12 @@ export const topCustomers = [
   { name: "BuildRight LLC", revenue: 2850 },
 ]
 
-export const insights = [
-  "ScaleUp Ltd generated 51% of total revenue.",
-  "Premium Plan is your top-selling product by revenue.",
-  "Revenue per customer averages $193.54.",
-  "April generated the highest revenue.",
-  "Basic Subscription sold the most units (421).",
+export const insights: { text: string; help?: string }[] = [
+  { text: "ScaleUp Ltd generated 51% of total revenue ($12,450.00).", help: "Revenue from this customer divided by total revenue." },
+  { text: "Premium Plan generated the most revenue ($7,800.00).", help: "Product with the highest total revenue." },
+  { text: "Revenue per customer averages $193.54.", help: "Total revenue divided by number of unique customers." },
+  { text: "April generated the highest revenue ($24,580.00).", help: "Month with the most total revenue." },
+  { text: "Basic Subscription sold the most units (421).", help: "Product with the highest quantity sold." },
 ]
 
 export const recentOrders = [
