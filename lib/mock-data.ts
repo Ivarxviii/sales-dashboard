@@ -30,6 +30,14 @@ export const topCustomers = [
   { name: "BuildRight LLC", revenue: 2850 },
 ]
 
+export const insights = [
+  "ScaleUp Ltd generated 51% of total revenue.",
+  "Premium Plan is your top-selling product by revenue.",
+  "Revenue per customer averages $193.54.",
+  "April generated the highest revenue.",
+  "Basic Subscription sold the most units (421).",
+]
+
 export const recentOrders = [
   { id: "#10284", date: "2025-03-07", customer: "Acme Corp", amount: 299, status: "Paid" },
   { id: "#10283", date: "2025-03-07", customer: "TechStart Inc", amount: 149, status: "Paid" },

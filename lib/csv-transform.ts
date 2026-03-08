@@ -6,6 +6,7 @@ import {
   topProducts,
   topCustomers,
   recentOrders,
+  insights as mockInsights,
 } from "@/lib/mock-data"
 
 export function remapRows(
@@ -39,6 +40,7 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
   topProducts: { name: string; units: number; revenue: number }[]
   topCustomers: { name: string; revenue: number }[]
   recentOrders: { id: string; date: string; customer: string; amount: number; status: string }[]
+  insights: string[]
 } {
   if (rows.length === 0) {
     return getDefaultData()
@@ -133,6 +135,14 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
     .sort((a, b) => b.date.localeCompare(a.date))
     .slice(0, 5)
 
+  const insights = generateInsights({
+    totalRevenue,
+    revenuePerCustomer,
+    revenueByMonthResult,
+    topProductsResult,
+    topCustomersResult,
+  })
+
   return {
     kpis: [
       { title: "Total Revenue", value: formatCurrency(totalRevenue), change: "—" },
@@ -146,7 +156,45 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
     topProducts: topProductsResult.length > 0 ? topProductsResult : topProducts,
     topCustomers: topCustomersResult.length > 0 ? topCustomersResult : topCustomers,
     recentOrders: recentOrdersResult.length > 0 ? recentOrdersResult : recentOrders,
+    insights,
   }
+}
+
+function generateInsights(data: {
+  totalRevenue: number
+  revenuePerCustomer: number
+  revenueByMonthResult: { month: string; revenue: number }[]
+  topProductsResult: { name: string; units: number; revenue: number }[]
+  topCustomersResult: { name: string; revenue: number }[]
+}): string[] {
+  const insights: string[] = []
+  const { totalRevenue, revenuePerCustomer, revenueByMonthResult, topProductsResult, topCustomersResult } = data
+
+  if (topCustomersResult.length > 0 && totalRevenue > 0) {
+    const top = topCustomersResult[0]
+    const pct = Math.round((top.revenue / totalRevenue) * 100)
+    insights.push(`${top.name} generated ${pct}% of total revenue.`)
+  }
+
+  if (topProductsResult.length > 0) {
+    insights.push(`${topProductsResult[0].name} is your top-selling product by revenue.`)
+  }
+
+  if (revenuePerCustomer > 0) {
+    insights.push(`Revenue per customer averages ${formatCurrency(revenuePerCustomer)}.`)
+  }
+
+  if (revenueByMonthResult.length > 0) {
+    const best = revenueByMonthResult.reduce((a, b) => (b.revenue > a.revenue ? b : a))
+    insights.push(`${best.month} generated the highest revenue.`)
+  }
+
+  if (topProductsResult.length > 0) {
+    const byUnits = topProductsResult.reduce((a, b) => (b.units > a.units ? b : a))
+    insights.push(`${byUnits.name} sold the most units (${byUnits.units}).`)
+  }
+
+  return insights
 }
 
 export function getDefaultData() {
@@ -156,6 +204,7 @@ export function getDefaultData() {
     topProducts,
     topCustomers,
     recentOrders,
+    insights: mockInsights,
   }
 }
 
@@ -179,6 +228,7 @@ export function getStoredSalesData(): SalesData | null {
       return {
         ...data,
         topCustomers: data.topCustomers ?? [],
+        insights: data.insights ?? [],
       } as SalesData
     }
   } catch {

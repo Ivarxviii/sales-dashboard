@@ -6,6 +6,7 @@ import DateRangeFilter from "@/components/dashboard/date-range-filter"
 import RevenueSection from "@/components/dashboard/revenue-section"
 import TopProducts from "@/components/dashboard/top-products"
 import TopCustomers from "@/components/dashboard/top-customers"
+import InsightsSection from "@/components/dashboard/insights-section"
 import RecentOrders from "@/components/dashboard/recent-orders"
 import {
   getStoredSalesData,
@@ -61,6 +62,10 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <TopCustomers topCustomers={salesData.topCustomers} />
         </div>
+      </div>
+
+      <div className="mb-8">
+        <InsightsSection insights={salesData.insights ?? []} />
       </div>
 
       <RecentOrders recentOrders={salesData.recentOrders} />
