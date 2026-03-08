@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/csv-transform"
+
 type RecentOrdersProps = {
   recentOrders: { id: string; date: string; customer: string; amount: number; status: string }[]
 }
@@ -33,7 +35,7 @@ export default function RecentOrders({ recentOrders }: RecentOrdersProps) {
                   <td className="py-3 font-medium text-gray-900">{order.id}</td>
                   <td className="py-3 text-gray-600">{order.date}</td>
                   <td className="py-3 text-gray-600">{order.customer}</td>
-                  <td className="py-3 text-right font-medium text-gray-900">${order.amount}</td>
+                  <td className="py-3 text-right font-medium text-gray-900">{formatCurrency(order.amount)}</td>
                   <td className="py-3">
                     <span
                       className={`inline-flex px-2 py-1 rounded-md text-xs font-medium ${

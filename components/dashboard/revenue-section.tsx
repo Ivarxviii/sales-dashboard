@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/csv-transform"
+
 type RevenueSectionProps = {
   revenueByMonth: { month: string; revenue: number }[]
 }
@@ -25,7 +27,7 @@ export default function RevenueSection({ revenueByMonth }: RevenueSectionProps) 
                 style={{ height: `${(revenue / maxRevenue) * 96}px` }}
               />
               <span className="text-xs text-gray-500 truncate w-full text-center">{month}</span>
-              <span className="text-xs font-medium">${(revenue / 1000).toFixed(1)}k</span>
+              <span className="text-xs font-medium">{formatCurrency(revenue)}</span>
             </div>
           ))}
         </div>

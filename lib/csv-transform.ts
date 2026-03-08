@@ -18,6 +18,15 @@ export function remapRows(
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+export function formatCurrency(n: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n)
+}
+
 export function transformToDashboardData(rows: Record<string, string>[]): {
   kpis: { title: string; value: string; change: string }[]
   revenueByMonth: { month: string; revenue: number }[]
@@ -111,9 +120,9 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
 
   return {
     kpis: [
-      { title: "Total Revenue", value: `$${totalRevenue.toLocaleString()}`, change: "—" },
+      { title: "Total Revenue", value: formatCurrency(totalRevenue), change: "—" },
       { title: "Orders", value: String(orderCount), change: "—" },
-      { title: "Average Order Value", value: `$${avgOrder.toFixed(2)}`, change: "—" },
+      { title: "Average Order Value", value: formatCurrency(avgOrder), change: "—" },
       { title: "Returning Customers", value: `${returningPct}%`, change: "—" },
     ],
     revenueByMonth: revenueByMonthResult.length > 0 ? revenueByMonthResult : revenueByMonth,

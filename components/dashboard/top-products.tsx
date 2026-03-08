@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/csv-transform"
+
 type TopProductsProps = {
   topProducts: { name: string; units: number; revenue: number }[]
 }
@@ -30,7 +32,7 @@ export default function TopProducts({ topProducts }: TopProductsProps) {
                 <tr key={product.name} className="hover:bg-gray-50/50">
                   <td className="py-3 font-medium text-gray-900">{product.name}</td>
                   <td className="py-3 text-right text-gray-600">{product.units}</td>
-                  <td className="py-3 text-right font-medium text-gray-900">${product.revenue.toLocaleString()}</td>
+                  <td className="py-3 text-right font-medium text-gray-900">{formatCurrency(product.revenue)}</td>
                 </tr>
               ))}
             </tbody>
