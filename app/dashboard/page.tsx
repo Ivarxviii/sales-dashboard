@@ -27,31 +27,16 @@ export default function DashboardPage() {
   }
 
   const salesData = data ?? getDefaultData()
-  const isSampleData = getStoredSalesData() === null
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {isSampleData && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          <span className="font-medium">Using sample data.</span>{" "}
-          <a href="/upload" className="underline hover:no-underline">
-            Upload your own CSV
-          </a>
-          {" "}to see your sales analytics.
-        </div>
-      )}
-      {!isSampleData && (
-        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-          <span className="font-medium">Showing your uploaded data.</span>
-        </div>
-      )}
-      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">Overview</h1>
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
+        <div className="flex items-center gap-4">
           <DateRangeFilter />
           <button
             onClick={handleReset}
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 sm:w-auto"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"
           >
             Reset to sample data
           </button>

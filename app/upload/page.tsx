@@ -6,6 +6,7 @@ import {
   parseCsv,
   getDefaultMapping,
   REQUIRED_FIELDS,
+  FIELD_METADATA,
   type ColumnMapping,
 } from "@/lib/csv-parse"
 import {
@@ -55,6 +56,12 @@ export default function UploadPage() {
 
   function updateMapping(field: keyof ColumnMapping, value: string) {
     setMapping((prev) => ({ ...prev, [field]: value || undefined }))
+  }
+
+  function getSampleValue(csvColumn: string): string {
+    if (!csvColumn) return ""
+    const row = previewRows.find((r) => (r[csvColumn] ?? "").trim())
+    return row ? String(row[csvColumn]).trim() : ""
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -241,38 +248,64 @@ export default function UploadPage() {
             {previewRows.length > 0 && csvHeaders.length > 0 && (
               <>
                 <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <p className="mb-3 text-sm font-semibold text-gray-800">
+                  <p className="mb-1 text-sm font-semibold text-gray-900">
                     Map your columns
                   </p>
-                  <div className="space-y-2">
-                    {REQUIRED_FIELDS.map((field) => (
-                      <div
-                        key={field}
-                        className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
-                      >
-                        <label
-                          htmlFor={`map-${field}`}
-                          className="w-24 shrink-0 text-sm text-gray-600"
+                  <p className="mb-4 text-xs text-gray-600">
+                    Match each field to the column in your CSV that contains it.
+                  </p>
+                  <div className="space-y-3">
+                    {REQUIRED_FIELDS.map((field) => {
+                      const meta = FIELD_METADATA[field]
+                      const csvColumn = mapping[field]
+                      const sample = csvColumn ? getSampleValue(csvColumn) : ""
+                      return (
+                        <div
+                          key={field}
+                          className="flex flex-col gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
                         >
-                          {field.replace(/_/g, " ")}
-                        </label>
-                        <select
-                          id={`map-${field}`}
-                          value={mapping[field] ?? ""}
-                          onChange={(e) =>
-                            updateMapping(field, e.target.value)
-                          }
-                          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                        >
-                          <option value="">— Select column —</option>
-                          {csvHeaders.map((h) => (
-                            <option key={h} value={h}>
-                              {h}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ))}
+                          <div className="min-w-0 flex-1">
+                            <label
+                              htmlFor={`map-${field}`}
+                              className="block font-medium text-gray-900"
+                            >
+                              {meta.label}
+                            </label>
+                            <p className="text-xs text-gray-600">
+                              {meta.description} · e.g. {meta.example}
+                            </p>
+                            <p className="mt-0.5 text-xs text-gray-400">
+                              {meta.synonyms.join(", ")}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+                            <select
+                              id={`map-${field}`}
+                              value={csvColumn ?? ""}
+                              onChange={(e) =>
+                                updateMapping(field, e.target.value)
+                              }
+                              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            >
+                              <option value="">— Select —</option>
+                              {csvHeaders.map((h) => (
+                                <option key={h} value={h}>
+                                  {h}
+                                </option>
+                              ))}
+                            </select>
+                            {sample && (
+                              <span
+                                className="max-w-[120px] truncate rounded bg-gray-100 px-2 py-1 text-xs text-gray-700"
+                                title={sample}
+                              >
+                                {sample}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
 
