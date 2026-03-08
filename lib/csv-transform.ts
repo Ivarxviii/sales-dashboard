@@ -224,46 +224,4 @@ export function getDefaultData() {
   }
 }
 
-const STORAGE_KEY = "sales-dashboard-data"
-
 export type SalesData = ReturnType<typeof getDefaultData>
-
-export function getStoredSalesData(): SalesData | null {
-  if (typeof window === "undefined") return null
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const data = JSON.parse(raw)
-    if (
-      data &&
-      data.kpis &&
-      data.revenueByMonth &&
-      data.topProducts &&
-      data.recentOrders
-    ) {
-      const rawInsights = data.insights ?? []
-      const insights = Array.isArray(rawInsights)
-        ? rawInsights.map((i) => (typeof i === "string" ? { text: i } : i))
-        : []
-
-      return {
-        ...data,
-        topCustomers: data.topCustomers ?? [],
-        insights,
-      } as SalesData
-    }
-  } catch {
-    return null
-  }
-  return null
-}
-
-export function setStoredSalesData(data: SalesData): void {
-  if (typeof window === "undefined") return
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-}
-
-export function clearStoredSalesData(): void {
-  if (typeof window === "undefined") return
-  localStorage.removeItem(STORAGE_KEY)
-}

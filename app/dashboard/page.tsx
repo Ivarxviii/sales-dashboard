@@ -8,33 +8,78 @@ import TopProducts from "@/components/dashboard/top-products"
 import TopCustomers from "@/components/dashboard/top-customers"
 import InsightsSection from "@/components/dashboard/insights-section"
 import RecentOrders from "@/components/dashboard/recent-orders"
+import { getDefaultData } from "@/lib/csv-transform"
 import {
-  getStoredSalesData,
-  getDefaultData,
-  clearStoredSalesData,
-  type SalesData,
-} from "@/lib/csv-transform"
+  getDatasetsState,
+  getActiveData,
+  setActiveDataset,
+  deleteDataset,
+  type DatasetsState,
+} from "@/lib/datasets"
 
 export default function DashboardPage() {
-  const [data, setData] = useState<SalesData | null>(null)
+  const [datasetsState, setDatasetsState] = useState<DatasetsState | null>(null)
 
   useEffect(() => {
-    const stored = getStoredSalesData()
-    setData(stored ?? getDefaultData())
+    setDatasetsState(getDatasetsState())
   }, [])
 
-  function handleReset() {
-    clearStoredSalesData()
-    setData(getDefaultData())
+  function refresh() {
+    setDatasetsState(getDatasetsState())
   }
 
-  const salesData = data ?? getDefaultData()
+  function handleSwitch(id: string | null) {
+    setActiveDataset(id)
+    refresh()
+  }
+
+  function handleDelete(id: string) {
+    deleteDataset(id)
+    refresh()
+  }
+
+  function handleReset() {
+    setActiveDataset(null)
+    refresh()
+  }
+
+  const activeData = datasetsState ? getActiveData() : null
+  const salesData = activeData ?? getDefaultData()
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
+          {datasetsState && datasetsState.datasets.length > 0 && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="dataset-select" className="sr-only">
+                Active dataset
+              </label>
+              <select
+                id="dataset-select"
+                value={datasetsState.activeId ?? ""}
+                onChange={(e) => handleSwitch(e.target.value || null)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+              >
+                <option value="">Sample data</option>
+                {datasetsState.datasets.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+              {datasetsState.activeId && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(datasetsState.activeId!)}
+                  className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
           <DateRangeFilter />
           <button
             onClick={handleReset}

@@ -9,11 +9,8 @@ import {
   FIELD_METADATA,
   type ColumnMapping,
 } from "@/lib/csv-parse"
-import {
-  remapRows,
-  transformToDashboardData,
-  setStoredSalesData,
-} from "@/lib/csv-transform"
+import { remapRows, transformToDashboardData } from "@/lib/csv-transform"
+import { addDataset } from "@/lib/datasets"
 import { getSampleCsvContent } from "@/lib/mock-data"
 
 type PreviewRow = Record<string, string>
@@ -27,6 +24,7 @@ export default function UploadPage() {
   const [parsedRows, setParsedRows] = useState<Record<string, string>[]>([])
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
   const [mapping, setMapping] = useState<Partial<ColumnMapping>>({})
+  const [datasetName, setDatasetName] = useState("")
 
   async function loadPreview(selectedFile: File | null) {
     if (!selectedFile) {
@@ -34,6 +32,7 @@ export default function UploadPage() {
       setParsedRows([])
       setCsvHeaders([])
       setMapping({})
+      setDatasetName("")
       return
     }
 
@@ -45,6 +44,10 @@ export default function UploadPage() {
       const headers = rows.length > 0 ? Object.keys(rows[0]) : []
       setCsvHeaders(headers)
       setMapping(getDefaultMapping(headers))
+      const baseName = selectedFile.name.toLowerCase().endsWith(".csv")
+        ? selectedFile.name.slice(0, -4)
+        : selectedFile.name
+      setDatasetName(baseName || "")
     } catch (error) {
       console.error(error)
       setPreviewRows([])
@@ -91,10 +94,11 @@ export default function UploadPage() {
     try {
       const remapped = remapRows(parsedRows, mapping as ColumnMapping)
       const data = transformToDashboardData(remapped)
-      setStoredSalesData(data)
+      const name = datasetName.trim() || "Untitled"
+      addDataset(name, data)
 
       setStatus("success")
-      setMessage("Upload successful! View your data on the dashboard.")
+      setMessage("Dataset saved. View it on the dashboard.")
     } catch (error) {
       console.error(error)
       setStatus("error")
@@ -233,6 +237,22 @@ export default function UploadPage() {
                 onChange={handleFileChange}
                 className="mt-4 w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium"
               />
+
+              {file && (
+                <div className="mt-4">
+                  <label htmlFor="dataset-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Dataset name
+                  </label>
+                  <input
+                    id="dataset-name"
+                    type="text"
+                    value={datasetName}
+                    onChange={(e) => setDatasetName(e.target.value)}
+                    placeholder="e.g. Q1 2025 Sales"
+                    className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              )}
 
               <p className="mt-2 text-xs text-gray-500">
                 Map your CSV columns to the required fields below.
