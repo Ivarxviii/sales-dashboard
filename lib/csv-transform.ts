@@ -33,8 +33,14 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
     return k ? (row[k] ?? "").trim() : ""
   }
 
-  const num = (val: string) => {
-    const n = parseFloat(String(val).replace(/[^0-9.-]/g, ""))
+  // Parses amount/quantity from strings like "$149", "3,447 USD", "1,299.50"
+  const parseNum = (val: string): number => {
+    const cleaned = String(val)
+      .replace(/,/g, "")
+      .replace(/\s*(USD|EUR|GBP)\s*/gi, "")
+      .replace(/[$€£]/g, "")
+      .replace(/[^0-9.-]/g, "")
+    const n = parseFloat(cleaned)
     return isNaN(n) ? 0 : n
   }
 
@@ -46,8 +52,8 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
 
   for (const row of rows) {
     const dateStr = get(row, "date")
-    const amount = num(get(row, "amount"))
-    const quantity = num(get(row, "quantity")) || 1
+    const amount = parseNum(get(row, "amount"))
+    const quantity = parseNum(get(row, "quantity")) || 1
     const orderId = get(row, "order_id")
     const customer = get(row, "customer")
     const product = get(row, "product")
