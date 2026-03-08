@@ -1,3 +1,20 @@
+Sales Dashboard (CSV Analytics Tool)
+
+A lightweight web app that turns messy CSV sales exports into a clean analytics dashboard.
+
+Features
+- Flexible CSV column mapping
+- Messy data normalization
+- Revenue analytics
+- Customer insights
+- Product performance analysis
+- Upload & explore data instantly
+
+Built with:
+Next.js
+TypeScript
+Tailwind
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
