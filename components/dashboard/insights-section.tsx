@@ -17,14 +17,17 @@ export default function InsightsSection({ insights }: InsightsSectionProps) {
       ) : (
         <ul className="space-y-3">
           {insights.map((insight, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+            <li
+              key={i}
+              {...(insight.help && { title: insight.help })}
+              className="flex items-start gap-2 text-sm text-gray-700"
+            >
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gray-400" />
               <span className="flex-1 min-w-0">{insight.text}</span>
               {insight.help && (
                 <span
-                  title={insight.help}
                   className="shrink-0 inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-200 text-gray-500 text-xs cursor-help"
-                  aria-label="More info"
+                  aria-hidden
                 >
                   ?
                 </span>
