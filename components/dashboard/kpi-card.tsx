@@ -1,4 +1,3 @@
-import React from "react"
 type KpiCardProps = {
   title: string
   value: string

@@ -11,7 +11,7 @@ export default function DashboardLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-14">
             <Link href="/dashboard" className="text-lg font-semibold text-gray-900">
-              Kanker Dashboard
+              Sales Dashboard
             </Link>
             <nav className="flex gap-6">
               <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
