@@ -9,6 +9,7 @@ export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
+  const [isDragging, setIsDragging] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -51,6 +52,28 @@ export default function UploadPage() {
     }
   }
 
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const droppedFile = e.dataTransfer.files?.[0] ?? null
+    if (!droppedFile) return
+
+    setFile(droppedFile)
+    setStatus("idle")
+    setMessage("")
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <header className="border-b border-gray-200 bg-white">
@@ -58,6 +81,7 @@ export default function UploadPage() {
           <Link href="/dashboard" className="text-lg font-semibold text-gray-900">
             Sales Dashboard
           </Link>
+
           <nav className="flex gap-6">
             <Link href="/dashboard" className="text-sm text-gray-600 hover:text-gray-900">
               Dashboard
@@ -73,14 +97,32 @@ export default function UploadPage() {
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">Upload Sales Data TEST</h1>
+        <h1 className="mb-6 text-2xl font-bold text-gray-900">Upload Sales Data</h1>
 
         <div className="max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="file" className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Choose a CSV file
               </label>
+
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`rounded-xl border-2 border-dashed p-6 text-center transition ${
+                  isDragging
+                    ? "border-gray-900 bg-gray-100"
+                    : "border-gray-300 bg-gray-50"
+                }`}
+              >
+                <p className="text-sm font-medium text-gray-700">
+                  Drag and drop your CSV here
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  or choose a file manually below
+                </p>
+              </div>
 
               <input
                 id="file"
@@ -88,7 +130,7 @@ export default function UploadPage() {
                 type="file"
                 accept=".csv"
                 onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                className="w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium"
+                className="mt-4 w-full text-sm text-gray-500 file:mr-4 file:rounded-lg file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium"
               />
 
               <p className="mt-2 text-xs text-gray-500">
@@ -128,4 +170,4 @@ export default function UploadPage() {
       </div>
     </main>
   )
-}
+} 
