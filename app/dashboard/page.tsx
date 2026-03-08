@@ -5,6 +5,7 @@ import KpiCard from "@/components/dashboard/kpi-card"
 import DateRangeFilter from "@/components/dashboard/date-range-filter"
 import RevenueSection from "@/components/dashboard/revenue-section"
 import TopProducts from "@/components/dashboard/top-products"
+import TopCustomers from "@/components/dashboard/top-customers"
 import RecentOrders from "@/components/dashboard/recent-orders"
 import {
   getStoredSalesData,
@@ -43,7 +44,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4 mb-8">
+      <div className="grid gap-6 grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
         {salesData.kpis.map((kpi) => (
           <KpiCard
             key={kpi.title}
@@ -57,6 +58,9 @@ export default function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2 mb-8">
         <RevenueSection revenueByMonth={salesData.revenueByMonth} />
         <TopProducts topProducts={salesData.topProducts} />
+        <div className="lg:col-span-2">
+          <TopCustomers topCustomers={salesData.topCustomers} />
+        </div>
       </div>
 
       <RecentOrders recentOrders={salesData.recentOrders} />

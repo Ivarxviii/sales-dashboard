@@ -1,6 +1,12 @@
 import type { ColumnMapping } from "@/lib/csv-parse"
 import { REQUIRED_FIELDS } from "@/lib/csv-parse"
-import { kpis as mockKpis, revenueByMonth, topProducts, recentOrders } from "@/lib/mock-data"
+import {
+  kpis as mockKpis,
+  revenueByMonth,
+  topProducts,
+  topCustomers,
+  recentOrders,
+} from "@/lib/mock-data"
 
 export function remapRows(
   rows: Record<string, string>[],
@@ -31,6 +37,7 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
   kpis: { title: string; value: string; change: string }[]
   revenueByMonth: { month: string; revenue: number }[]
   topProducts: { name: string; units: number; revenue: number }[]
+  topCustomers: { name: string; revenue: number }[]
   recentOrders: { id: string; date: string; customer: string; amount: number; status: string }[]
 } {
   if (rows.length === 0) {
@@ -58,6 +65,7 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
   const orderMap = new Map<string, { date: string; customer: string; amount: number; status: string }>()
   const productMap = new Map<string, { units: number; revenue: number }>()
   const customerOrderCount = new Map<string, number>()
+  const customerRevenueMap = new Map<string, number>()
 
   for (const row of rows) {
     const dateStr = get(row, "date")
@@ -92,12 +100,14 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
     }
 
     customerOrderCount.set(customer, (customerOrderCount.get(customer) ?? 0) + 1)
+    customerRevenueMap.set(customer, (customerRevenueMap.get(customer) ?? 0) + amount)
   }
 
   const totalRevenue = Array.from(orderMap.values()).reduce((s, o) => s + o.amount, 0)
   const orderCount = orderMap.size
   const avgOrder = orderCount > 0 ? totalRevenue / orderCount : 0
   const uniqueCustomers = customerOrderCount.size
+  const revenuePerCustomer = uniqueCustomers > 0 ? totalRevenue / uniqueCustomers : 0
   const returningCount = Array.from(customerOrderCount.values()).filter((c) => c > 1).length
   const returningPct = uniqueCustomers > 0 ? ((returningCount / uniqueCustomers) * 100).toFixed(1) : "0"
 
@@ -113,6 +123,11 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5)
 
+  const topCustomersResult = Array.from(customerRevenueMap.entries())
+    .map(([name, revenue]) => ({ name, revenue }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
+
   const recentOrdersResult = Array.from(orderMap.entries())
     .map(([id, { date, customer, amount, status }]) => ({ id, date, customer, amount, status }))
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -123,10 +138,13 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
       { title: "Total Revenue", value: formatCurrency(totalRevenue), change: "—" },
       { title: "Orders", value: String(orderCount), change: "—" },
       { title: "Average Order Value", value: formatCurrency(avgOrder), change: "—" },
+      { title: "Unique Customers", value: String(uniqueCustomers), change: "—" },
+      { title: "Revenue per Customer", value: formatCurrency(revenuePerCustomer), change: "—" },
       { title: "Returning Customers", value: `${returningPct}%`, change: "—" },
     ],
     revenueByMonth: revenueByMonthResult.length > 0 ? revenueByMonthResult : revenueByMonth,
     topProducts: topProductsResult.length > 0 ? topProductsResult : topProducts,
+    topCustomers: topCustomersResult.length > 0 ? topCustomersResult : topCustomers,
     recentOrders: recentOrdersResult.length > 0 ? recentOrdersResult : recentOrders,
   }
 }
@@ -136,6 +154,7 @@ export function getDefaultData() {
     kpis: mockKpis,
     revenueByMonth,
     topProducts,
+    topCustomers,
     recentOrders,
   }
 }
@@ -150,8 +169,17 @@ export function getStoredSalesData(): SalesData | null {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
     const data = JSON.parse(raw)
-    if (data && data.kpis && data.revenueByMonth && data.topProducts && data.recentOrders) {
-      return data as SalesData
+    if (
+      data &&
+      data.kpis &&
+      data.revenueByMonth &&
+      data.topProducts &&
+      data.recentOrders
+    ) {
+      return {
+        ...data,
+        topCustomers: data.topCustomers ?? [],
+      } as SalesData
     }
   } catch {
     return null

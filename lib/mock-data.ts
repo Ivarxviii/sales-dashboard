@@ -1,24 +1,10 @@
 export const kpis = [
-  {
-    title: "Total Revenue",
-    value: "$24,580",
-    change: "+12%",
-  },
-  {
-    title: "Orders",
-    value: "418",
-    change: "+8%",
-  },
-  {
-    title: "Average Order Value",
-    value: "$58.80",
-    change: "+3%",
-  },
-  {
-    title: "Returning Customers",
-    value: "27%",
-    change: "+1.5%",
-  },
+  { title: "Total Revenue", value: "$24,580.00", change: "+12%" },
+  { title: "Orders", value: "418", change: "+8%" },
+  { title: "Average Order Value", value: "$58.80", change: "+3%" },
+  { title: "Unique Customers", value: "127", change: "+5%" },
+  { title: "Revenue per Customer", value: "$193.54", change: "+7%" },
+  { title: "Returning Customers", value: "27%", change: "+1.5%" },
 ]
 
 export const revenueByMonth = [
@@ -34,6 +20,14 @@ export const topProducts = [
   { name: "Pro Add-on", units: 89, revenue: 4450 },
   { name: "Enterprise License", units: 12, revenue: 3600 },
   { name: "Basic Subscription", units: 421, revenue: 2105 },
+]
+
+export const topCustomers = [
+  { name: "ScaleUp Ltd", revenue: 12450 },
+  { name: "Acme Corp", revenue: 8950 },
+  { name: "Design Co", revenue: 7200 },
+  { name: "TechStart Inc", revenue: 4130 },
+  { name: "BuildRight LLC", revenue: 2850 },
 ]
 
 export const recentOrders = [
