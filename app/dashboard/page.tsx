@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import KpiCard from "@/components/dashboard/kpi-card"
-import DateRangeFilter from "@/components/dashboard/date-range-filter"
+import DateRangeFilter, { type DateRange } from "@/components/dashboard/date-range-filter"
 import RevenueSection from "@/components/dashboard/revenue-section"
 import TopProducts from "@/components/dashboard/top-products"
 import TopCustomers from "@/components/dashboard/top-customers"
@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState("")
   const [productFilter, setProductFilter] = useState("")
   const [customerFilter, setCustomerFilter] = useState("")
+  const [dateRange, setDateRange] = useState<DateRange>("Last 30 days")
 
   useEffect(() => {
     setDatasetsState(getDatasetsState())
@@ -36,6 +37,7 @@ export default function DashboardPage() {
     setStatusFilter("")
     setProductFilter("")
     setCustomerFilter("")
+    setDateRange("Last 30 days")
   }
 
   function handleSwitch(id: string | null) {
@@ -63,7 +65,29 @@ export default function DashboardPage() {
   let salesData = activeData ?? getDefaultData()
 
   if (rows && rows.length > 0) {
-    const filteredRows = rows.filter((row) => {
+    const validDates = rows
+      .map((r) => new Date(r.date))
+      .filter((d) => !isNaN(d.getTime()))
+
+    let rangedRows = rows
+
+    if (validDates.length > 0) {
+      const latestTime = Math.max(...validDates.map((d) => d.getTime()))
+      const latestDate = new Date(latestTime)
+      const msInDay = 24 * 60 * 60 * 1000
+      const days =
+        dateRange === "Last 7 days" ? 7 : dateRange === "Last 30 days" ? 30 : 90
+      const fromTime = latestTime - (days - 1) * msInDay
+
+      rangedRows = rows.filter((row) => {
+        const d = new Date(row.date)
+        if (isNaN(d.getTime())) return false
+        const t = d.getTime()
+        return t >= fromTime && t <= latestTime
+      })
+    }
+
+    const filteredRows = rangedRows.filter((row) => {
       if (statusFilter && row.status !== statusFilter) return false
       if (productFilter && row.product !== productFilter) return false
       if (customerFilter && row.customer !== customerFilter) return false
@@ -160,7 +184,7 @@ export default function DashboardPage() {
               </select>
             </div>
           )}
-          <DateRangeFilter />
+          <DateRangeFilter value={dateRange} onChange={setDateRange} />
           <button
             onClick={handleReset}
             className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50"

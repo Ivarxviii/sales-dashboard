@@ -98,6 +98,8 @@ export function transformToDashboardData(rows: SalesRow[]): {
   const productMap = new Map<string, { units: number; revenue: number }>()
   const customerOrderCount = new Map<string, number>()
   const customerRevenueMap = new Map<string, number>()
+  const monthOrderIds = new Map<string, Set<string>>()
+  const monthCustomers = new Map<string, Set<string>>()
 
   for (const row of rows) {
     const dateStr = row.date?.trim()
@@ -116,6 +118,17 @@ export function transformToDashboardData(rows: SalesRow[]): {
     const monthKey = `${date.getFullYear()}-${date.getMonth()}`
     const monthLabel = MONTHS[date.getMonth()] || "?"
     monthMap.set(monthKey, (monthMap.get(monthKey) ?? 0) + amount)
+
+    if (!monthOrderIds.has(monthKey)) {
+      monthOrderIds.set(monthKey, new Set())
+    }
+    if (!monthCustomers.has(monthKey)) {
+      monthCustomers.set(monthKey, new Set())
+    }
+    monthOrderIds.get(monthKey)!.add(orderId)
+    if (customer) {
+      monthCustomers.get(monthKey)!.add(customer)
+    }
 
     const existing = orderMap.get(orderId)
     if (existing) {
@@ -142,6 +155,49 @@ export function transformToDashboardData(rows: SalesRow[]): {
   const revenuePerCustomer = uniqueCustomers > 0 ? totalRevenue / uniqueCustomers : 0
   const returningCount = Array.from(customerOrderCount.values()).filter((c) => c > 1).length
   const returningPct = uniqueCustomers > 0 ? ((returningCount / uniqueCustomers) * 100).toFixed(1) : "0"
+
+  const monthKeys = Array.from(monthMap.keys()).sort((a, b) => a.localeCompare(b))
+
+  const formatChange = (current: number, previous: number): string => {
+    if (!isFinite(previous) || previous <= 0) return "—"
+    const diff = ((current - previous) / previous) * 100
+    if (!isFinite(diff)) return "—"
+    const rounded = Math.round(diff)
+    const sign = rounded > 0 ? "+" : ""
+    return `${sign}${rounded}%`
+  }
+
+  let revenueChange: string = "—"
+  let ordersChange: string = "—"
+  let customersChange: string = "—"
+  let revenuePerCustomerChange: string = "—"
+
+  if (monthKeys.length >= 2) {
+    const currentMonthKey = monthKeys[monthKeys.length - 1]!
+    const previousMonthKey = monthKeys[monthKeys.length - 2]!
+
+    const currentRevenue = monthMap.get(currentMonthKey) ?? 0
+    const previousRevenue = monthMap.get(previousMonthKey) ?? 0
+
+    const currentOrders = monthOrderIds.get(currentMonthKey)?.size ?? 0
+    const previousOrders = monthOrderIds.get(previousMonthKey)?.size ?? 0
+
+    const currentCustomers = monthCustomers.get(currentMonthKey)?.size ?? 0
+    const previousCustomers = monthCustomers.get(previousMonthKey)?.size ?? 0
+
+    const currentRevenuePerCustomer =
+      currentCustomers > 0 ? currentRevenue / currentCustomers : 0
+    const previousRevenuePerCustomer =
+      previousCustomers > 0 ? previousRevenue / previousCustomers : 0
+
+    revenueChange = formatChange(currentRevenue, previousRevenue)
+    ordersChange = formatChange(currentOrders, previousOrders)
+    customersChange = formatChange(currentCustomers, previousCustomers)
+    revenuePerCustomerChange = formatChange(
+      currentRevenuePerCustomer,
+      previousRevenuePerCustomer
+    )
+  }
 
   const revenueByMonthResult = Array.from(monthMap.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -175,11 +231,15 @@ export function transformToDashboardData(rows: SalesRow[]): {
 
   return {
     kpis: [
-      { title: "Total Revenue", value: formatCurrency(totalRevenue), change: "—" },
-      { title: "Orders", value: String(orderCount), change: "—" },
+      { title: "Total Revenue", value: formatCurrency(totalRevenue), change: revenueChange },
+      { title: "Orders", value: String(orderCount), change: ordersChange },
       { title: "Average Order Value", value: formatCurrency(avgOrder), change: "—" },
-      { title: "Unique Customers", value: String(uniqueCustomers), change: "—" },
-      { title: "Revenue per Customer", value: formatCurrency(revenuePerCustomer), change: "—" },
+      { title: "Unique Customers", value: String(uniqueCustomers), change: customersChange },
+      {
+        title: "Revenue per Customer",
+        value: formatCurrency(revenuePerCustomer),
+        change: revenuePerCustomerChange,
+      },
       { title: "Returning Customers", value: `${returningPct}%`, change: "—" },
     ],
     revenueByMonth: revenueByMonthResult.length > 0 ? revenueByMonthResult : revenueByMonth,

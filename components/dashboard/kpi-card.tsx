@@ -13,7 +13,7 @@ export default function KpiCard({ title, value, change }: KpiCardProps) {
       <p
         className={`mt-2 text-sm ${hasComparison ? "text-green-600" : "text-gray-400"}`}
       >
-        {hasComparison ? `${change} vs last month` : "No comparison available"}
+        {hasComparison ? `${change} vs previous period` : "No comparison available"}
       </p>
     </div>
   )
