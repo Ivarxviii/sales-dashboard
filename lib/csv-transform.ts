@@ -9,16 +9,37 @@ import {
   insights as mockInsights,
 } from "@/lib/mock-data"
 
+export type SalesRow = {
+  order_id: string
+  date: string
+  customer: string
+  product: string
+  quantity: string
+  amount: string
+  status: string
+}
+
 export function remapRows(
   rows: Record<string, string>[],
   mapping: ColumnMapping
-): Record<string, string>[] {
+): SalesRow[] {
   return rows.map((row) => {
-    const remapped: Record<string, string> = {}
+    const remapped: SalesRow = {
+      order_id: "",
+      date: "",
+      customer: "",
+      product: "",
+      quantity: "",
+      amount: "",
+      status: "",
+    }
+
     for (const field of REQUIRED_FIELDS) {
       const csvHeader = mapping[field]
-      remapped[field] = (csvHeader ? row[csvHeader] : "") ?? ""
+      ;(remapped as Record<string, string>)[field] =
+        (csvHeader ? row[csvHeader] : "") ?? ""
     }
+
     return remapped
   })
 }
@@ -34,7 +55,7 @@ export function formatCurrency(n: number): string {
   }).format(n)
 }
 
-export function transformToDashboardData(rows: Record<string, string>[]): {
+export function transformToDashboardData(rows: SalesRow[]): {
   kpis: { title: string; value: string; change: string }[]
   revenueByMonth: { month: string; revenue: number }[]
   topProducts: { name: string; units: number; revenue: number }[]
@@ -43,12 +64,21 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
   insights: { text: string; help?: string }[]
 } {
   if (rows.length === 0) {
-    return getDefaultData()
-  }
-
-  const get = (row: Record<string, string>, key: string) => {
-    const k = Object.keys(row).find((r) => r.toLowerCase().trim() === key.toLowerCase())
-    return k ? (row[k] ?? "").trim() : ""
+    return {
+      kpis: [
+        { title: "Total Revenue", value: formatCurrency(0), change: "—" },
+        { title: "Orders", value: "0", change: "—" },
+        { title: "Average Order Value", value: formatCurrency(0), change: "—" },
+        { title: "Unique Customers", value: "0", change: "—" },
+        { title: "Revenue per Customer", value: formatCurrency(0), change: "—" },
+        { title: "Returning Customers", value: "0%", change: "—" },
+      ],
+      revenueByMonth: [],
+      topProducts: [],
+      topCustomers: [],
+      recentOrders: [],
+      insights: [],
+    }
   }
 
   // Parses amount/quantity from strings like "$149", "3,447 USD", "1,299.50"
@@ -70,13 +100,13 @@ export function transformToDashboardData(rows: Record<string, string>[]): {
   const customerRevenueMap = new Map<string, number>()
 
   for (const row of rows) {
-    const dateStr = get(row, "date")
-    const amount = parseNum(get(row, "amount"))
-    const quantity = parseNum(get(row, "quantity")) || 1
-    const orderId = get(row, "order_id")
-    const customer = get(row, "customer")
-    const product = get(row, "product")
-    const status = get(row, "status") || "Unknown"
+    const dateStr = row.date?.trim()
+    const amount = parseNum(row.amount)
+    const quantity = parseNum(row.quantity) || 1
+    const orderId = row.order_id?.trim()
+    const customer = row.customer?.trim()
+    const product = row.product?.trim()
+    const status = (row.status || "Unknown").trim() || "Unknown"
 
     if (!dateStr || !orderId) continue
 

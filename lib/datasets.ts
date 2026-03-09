@@ -1,4 +1,4 @@
-import type { SalesData } from "@/lib/csv-transform"
+import type { SalesData, SalesRow } from "@/lib/csv-transform"
 import { getDefaultData } from "@/lib/csv-transform"
 
 const STORAGE_KEY = "sales-dashboard-data"
@@ -7,6 +7,7 @@ export type Dataset = {
   id: string
   name: string
   data: SalesData
+  rows?: SalesRow[]
 }
 
 export type DatasetsState = {
@@ -69,8 +70,21 @@ export function getDatasetsState(): DatasetsState | null {
     const datasets: Dataset[] = []
     for (const item of state.datasets) {
       if (item && typeof item === "object" && typeof (item as Dataset).id === "string" && typeof (item as Dataset).name === "string") {
-        const norm = normalizeSalesData((item as Dataset).data)
-        if (norm) datasets.push({ id: (item as Dataset).id, name: (item as Dataset).name, data: norm })
+        const anyItem = item as Dataset & { rows?: unknown }
+        const norm = normalizeSalesData(anyItem.data)
+        if (!norm) continue
+
+        let rows: SalesRow[] | undefined
+        if (Array.isArray(anyItem.rows)) {
+          rows = anyItem.rows as SalesRow[]
+        }
+
+        datasets.push({
+          id: anyItem.id,
+          name: anyItem.name,
+          data: norm,
+          rows,
+        })
       }
     }
 
@@ -99,10 +113,17 @@ export function getActiveData(): SalesData | null {
   return found?.data ?? null
 }
 
-export function addDataset(name: string, data: SalesData): string {
+export function getActiveDataset(): Dataset | null {
+  const state = getDatasetsState()
+  if (!state || !state.activeId) return null
+  const found = state.datasets.find((d) => d.id === state.activeId)
+  return found ?? null
+}
+
+export function addDataset(name: string, data: SalesData, rows?: SalesRow[]): string {
   const state = getDatasetsState() ?? { activeId: null, datasets: [] }
   const id = generateId()
-  const dataset: Dataset = { id, name: name.trim() || "Untitled", data }
+  const dataset: Dataset = { id, name: name.trim() || "Untitled", data, rows }
   const next: DatasetsState = {
     activeId: id,
     datasets: [...state.datasets, dataset],

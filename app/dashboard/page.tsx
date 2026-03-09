@@ -8,17 +8,21 @@ import TopProducts from "@/components/dashboard/top-products"
 import TopCustomers from "@/components/dashboard/top-customers"
 import InsightsSection from "@/components/dashboard/insights-section"
 import RecentOrders from "@/components/dashboard/recent-orders"
-import { getDefaultData } from "@/lib/csv-transform"
+import { getDefaultData, transformToDashboardData } from "@/lib/csv-transform"
 import {
   getDatasetsState,
   getActiveData,
   setActiveDataset,
   deleteDataset,
   type DatasetsState,
+  getActiveDataset,
 } from "@/lib/datasets"
 
 export default function DashboardPage() {
   const [datasetsState, setDatasetsState] = useState<DatasetsState | null>(null)
+  const [statusFilter, setStatusFilter] = useState("")
+  const [productFilter, setProductFilter] = useState("")
+  const [customerFilter, setCustomerFilter] = useState("")
 
   useEffect(() => {
     setDatasetsState(getDatasetsState())
@@ -28,23 +32,59 @@ export default function DashboardPage() {
     setDatasetsState(getDatasetsState())
   }
 
+  function resetFilters() {
+    setStatusFilter("")
+    setProductFilter("")
+    setCustomerFilter("")
+  }
+
   function handleSwitch(id: string | null) {
     setActiveDataset(id)
     refresh()
+    resetFilters()
   }
 
   function handleDelete(id: string) {
     deleteDataset(id)
     refresh()
+    resetFilters()
   }
 
   function handleReset() {
     setActiveDataset(null)
     refresh()
+    resetFilters()
   }
 
   const activeData = datasetsState ? getActiveData() : null
-  const salesData = activeData ?? getDefaultData()
+  const activeDataset = datasetsState ? getActiveDataset() : null
+  const rows = activeDataset?.rows ?? null
+
+  let salesData = activeData ?? getDefaultData()
+
+  if (rows && rows.length > 0) {
+    const filteredRows = rows.filter((row) => {
+      if (statusFilter && row.status !== statusFilter) return false
+      if (productFilter && row.product !== productFilter) return false
+      if (customerFilter && row.customer !== customerFilter) return false
+      return true
+    })
+
+    salesData = transformToDashboardData(filteredRows)
+  }
+
+  const statusOptions =
+    rows && rows.length > 0
+      ? Array.from(new Set(rows.map((r) => r.status).filter(Boolean))).sort()
+      : []
+  const productOptions =
+    rows && rows.length > 0
+      ? Array.from(new Set(rows.map((r) => r.product).filter(Boolean))).sort()
+      : []
+  const customerOptions =
+    rows && rows.length > 0
+      ? Array.from(new Set(rows.map((r) => r.customer).filter(Boolean))).sort()
+      : []
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -78,6 +118,46 @@ export default function DashboardPage() {
                   Delete
                 </button>
               )}
+            </div>
+          )}
+          {rows && rows.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+              >
+                <option value="">All statuses</option>
+                {statusOptions.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={productFilter}
+                onChange={(e) => setProductFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+              >
+                <option value="">All products</option>
+                {productOptions.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={customerFilter}
+                onChange={(e) => setCustomerFilter(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700"
+              >
+                <option value="">All customers</option>
+                {customerOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
           <DateRangeFilter />

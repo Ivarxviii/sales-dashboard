@@ -95,7 +95,7 @@ export default function UploadPage() {
       const remapped = remapRows(parsedRows, mapping as ColumnMapping)
       const data = transformToDashboardData(remapped)
       const name = datasetName.trim() || "Untitled"
-      addDataset(name, data)
+      addDataset(name, data, remapped)
 
       setStatus("success")
       setMessage("Dataset saved. View it on the dashboard.")
